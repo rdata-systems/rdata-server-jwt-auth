@@ -12,10 +12,10 @@ var MockServer = function MockServer(){
 
     var MockConnection = function MockConnection(){
         var self = this;
-        self.authenticated = false;
+        self.authorized = false;
         self.user = null;
-        self.authenticate = function(userId, callback){
-            self.authenticated = true;
+        self.authorize = function(userId, callback){
+            self.authorized = true;
             self.user = {userId: userId};
             callback(null, true);
         }
@@ -28,10 +28,10 @@ var MockServer = function MockServer(){
         self.exposedAnonymously = merge(self.exposedAnonymously, controller.exposedAnonymously);
     };
 
-    self.authenticate = function(params, callback){
+    self.authorize = function(params, callback){
         var connection = new MockConnection();
         self.connections.push(connection);
-        self.exposedAnonymously['authenticate'](connection, params, callback);
+        self.exposedAnonymously['authorize'](connection, params, callback);
     };
 };
 
@@ -43,60 +43,60 @@ describe('JwtAuth', function() {
         assert(server.controllers["jwtAuth"]);
     });
 
-    it('exposes authenticate method on the server', function () {
+    it('exposes authorize method on the server', function () {
         var server = new MockServer();
         initJwtAuth(server);
-        assert(typeof server.exposedAnonymously["authenticate"] === 'function');
+        assert(typeof server.exposedAnonymously["authorize"] === 'function');
     });
 
-    it('authenticates using valid json web token', function (done) {
+    it('authorizes using valid json web token', function (done) {
         var user = {id: "ASD123"};
         var token = jwt.sign({user: user}, process.env["JWT_SECRET"]);
 
         var server = new MockServer();
         initJwtAuth(server);
-        assert(typeof server.exposedAnonymously["authenticate"] === 'function');
+        assert(typeof server.exposedAnonymously["authorize"] === 'function');
 
-        server.authenticate({accessToken: token}, function(err, result){
+        server.authorize({accessToken: token}, function(err, result){
             assert(result);
             assert(server.connections[0]);
-            assert(server.connections[0].authenticated);
+            assert(server.connections[0].authorized);
             assert(server.connections[0].user.userId === user.id);
             done();
         });
     });
 
-    it('fails to authenticate with invalid token', function (done) {
+    it('fails to authorize with invalid token', function (done) {
         var user = {id: "ASD123"};
         var token = jwt.sign({user: user}, "INVALIDTOKEN");
 
         var server = new MockServer();
         initJwtAuth(server);
-        assert(typeof server.exposedAnonymously["authenticate"] === 'function');
+        assert(typeof server.exposedAnonymously["authorize"] === 'function');
 
-        server.authenticate({accessToken: token}, function(err, result){
+        server.authorize({accessToken: token}, function(err, result){
             assert(err);
             assert(!result);
             assert(server.connections[0]);
-            assert(!server.connections[0].authenticated);
+            assert(!server.connections[0].authorized);
             done();
         });
     });
 
-    it('fails to authenticate with expired token', function (done) {
+    it('fails to authorize with expired token', function (done) {
         var user = {id: "ASD123"};
         var token = jwt.sign({user: user}, process.env["JWT_SECRET"], { expiresIn: "1ms"});
 
         var server = new MockServer();
         initJwtAuth(server);
-        assert(typeof server.exposedAnonymously["authenticate"] === 'function');
+        assert(typeof server.exposedAnonymously["authorize"] === 'function');
 
         setTimeout(function(){
-            server.authenticate({accessToken: token}, function(err, result){
+            server.authorize({accessToken: token}, function(err, result){
                 assert(err);
                 assert(!result);
                 assert(server.connections[0]);
-                assert(!server.connections[0].authenticated);
+                assert(!server.connections[0].authorized);
                 done();
             });
         }, 10);

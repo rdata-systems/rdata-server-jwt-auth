@@ -20,17 +20,17 @@ var JwtAuthController = function JwtAuthController(server){
         return self;
     };
 
-    self.authenticateJwt = function(connection, params, callback){
+    self.authorizeJwt = function(connection, params, callback){
         var accessToken = params.accessToken;
         if(!accessToken) return callback(new Error('Access token is invalid'));
         jwt.verify(accessToken, self.jwtSecret, function(err, token){
             if(err) return callback(err);
-            connection.authenticate(token.user.id, callback);
+            connection.authorize(token.user.id, callback);
         });
     };
 
     self.exposedAnonymously = {
-        'authenticate': self.authenticateJwt
+        'authorize': self.authorizeJwt
     };
 };
 

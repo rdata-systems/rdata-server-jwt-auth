@@ -1,7 +1,7 @@
 {
   "name": "rdata-server-jwt-auth",
   "version": "1.0.0",
-  "description": "RData Collection Server JWT Authentication",
+  "description": "RData Collection Server JWT Authorization",
   "main": "index.js",
   "scripts": {
     "test": "./node_modules/.bin/mocha --reporter spec"
