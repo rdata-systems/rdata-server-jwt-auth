@@ -1,0 +1,26 @@
+{
+  "name": "rdata-server-jwt-auth",
+  "version": "1.0.0",
+  "description": "RData Collection Server JWT Authentication",
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/mocha --reporter spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rdata-systems/rdata-server-jwt-auth.git"
+  },
+  "author": "Leonid Umanskiy",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rdata-systems/rdata-server-jwt-auth/issues"
+  },
+  "homepage": "https://github.com/rdata-systems/rdata-server-jwt-auth#readme",
+  "dependencies": {
+    "jsonwebtoken": "^7.3.0"
+  },
+  "devDependencies": {
+    "merge": "^1.2.0",
+    "mocha": "^3.2.0"
+  }
+}
