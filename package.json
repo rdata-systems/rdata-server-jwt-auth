@@ -1,6 +1,6 @@
 {
   "name": "rdata-server-jwt-auth",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "RData Collection Server JWT Authorization",
   "main": "index.js",
   "scripts": {
