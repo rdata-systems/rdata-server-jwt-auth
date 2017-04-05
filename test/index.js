@@ -14,9 +14,10 @@ var MockServer = function MockServer(){
         var self = this;
         self.authorized = false;
         self.user = null;
-        self.authorize = function(userId, callback){
+        self.authorize = function(userId, gameVersion, callback){
             self.authorized = true;
             self.user = {userId: userId};
+            self.gameVersion = gameVersion;
             callback(null, true);
         }
     };
