@@ -14,10 +14,11 @@ var MockServer = function MockServer(){
         var self = this;
         self.authorized = false;
         self.user = null;
-        self.authorize = function(userId, gameVersion, callback){
+        self.authorize = function(userId, gameVersion, userPayload, callback){
             self.authorized = true;
-            self.user = {userId: userId};
+            self.user = {userId: userId, userPayload: userPayload};
             self.gameVersion = gameVersion;
+            self.userPayload = userPayload;
             callback(null, true);
         }
     };
@@ -62,7 +63,40 @@ describe('JwtAuth', function() {
             assert(result);
             assert(server.connections[0]);
             assert(server.connections[0].authorized);
-            assert(server.connections[0].user.userId === user.id);
+            assert.equal(server.connections[0].user.userId, user.id);
+            done();
+        });
+    });
+
+    it('authorizes using valid json web token and provides selectedGroups', function (done) {
+        var user = {id: "ASD123", groups: [1,2,3]};
+        var token = jwt.sign({user: user}, process.env["JWT_SECRET"]);
+
+        var server = new MockServer();
+        initJwtAuth(server);
+        assert(typeof server.exposedAnonymously["authorize"] === 'function');
+
+        server.authorize({accessToken: token, selectedGroups: [2,3]}, function(err, result){
+            assert(result);
+            assert(server.connections[0]);
+            assert(server.connections[0].authorized);
+            assert.equal(server.connections[0].user.userId, user.id);
+            assert.equal(server.connections[0].userPayload.selectedGroups[0], 2);
+            assert.equal(server.connections[0].userPayload.selectedGroups[1], 3);
+            done();
+        });
+    });
+
+    it('authorizes using valid json web token and provides incorrect selectedGroups', function (done) {
+        var user = {id: "ASD123", groups: [1,2,3]};
+        var token = jwt.sign({user: user}, process.env["JWT_SECRET"]);
+
+        var server = new MockServer();
+        initJwtAuth(server);
+        assert(typeof server.exposedAnonymously["authorize"] === 'function');
+
+        server.authorize({accessToken: token, selectedGroups: [2,5]}, function(err, result){
+            assert(!result);
             done();
         });
     });

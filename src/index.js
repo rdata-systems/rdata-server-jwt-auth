@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const merge = require('merge');
 
 const requireProcessEnv = function requireProcessEnv(name){
     if (!process.env[name])
@@ -22,10 +23,27 @@ var JwtAuthController = function JwtAuthController(server){
 
     self.authorizeJwt = function(connection, params, callback){
         var accessToken = params.accessToken;
-        if(!accessToken) return callback(new Error('Access token is invalid'));
-        jwt.verify(accessToken, self.jwtSecret, function(err, token){
+        var selectedGroups = params.selectedGroups || null;
+
+        if(!accessToken)
+            return callback(new Error('Access token is invalid'));
+
+        jwt.verify(accessToken, self.jwtSecret, function(err, decodedToken){
             if(err) return callback(err);
-            connection.authorize(params.userId, params.gameVersion, params.userPayload || null, function (err) {
+
+            if(selectedGroups && Array.isArray(selectedGroups) && selectedGroups.length > 0){ // If groups selected
+                // Check if user can actually select these groups
+                selectedGroups.forEach(function(groupId){
+                    if(!decodedToken.user.groups.includes(groupId))
+                        return callback(new Error('group was not found in the accessToken.user.groups')); // Return an error
+                });
+            }
+
+            var userPayload = merge(true, decodedToken.user, {
+                selectedGroups: selectedGroups
+            });
+
+            connection.authorize(decodedToken.user.id, params.gameVersion, userPayload, function (err) {
                 if(err) return callback(err);
                 callback(null, true);
             });
