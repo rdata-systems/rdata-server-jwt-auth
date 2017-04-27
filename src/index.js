@@ -25,7 +25,7 @@ var JwtAuthController = function JwtAuthController(server){
         if(!accessToken) return callback(new Error('Access token is invalid'));
         jwt.verify(accessToken, self.jwtSecret, function(err, token){
             if(err) return callback(err);
-            connection.authorize(token.user.id, params.gameVersion, function(err){
+            connection.authorize(params.userId, params.gameVersion, params.userPayload || null, function (err) {
                 if(err) return callback(err);
                 callback(null, true);
             });
