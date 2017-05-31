@@ -9,6 +9,7 @@ var MockServer = function MockServer(){
     self.exposed = {};
     self.exposedAnonymously = {};
     self.connections = [];
+    self.options = { game: "testGame" };
 
     var MockConnection = function MockConnection(){
         var self = this;
@@ -23,8 +24,7 @@ var MockServer = function MockServer(){
         }
     };
 
-    self.addController = function(Controller, controllerName){
-        var controller = new Controller();
+    self.addController = function(controller, controllerName){
         self.controllers[controllerName] = controller;
         self.exposed = merge(self.exposed, controller.exposed);
         self.exposedAnonymously = merge(self.exposedAnonymously, controller.exposedAnonymously);
@@ -69,14 +69,14 @@ describe('JwtAuth', function() {
     });
 
     it('authorizes using valid json web token and provides selectedGroups', function (done) {
-        var user = {id: "ASD123", groups: [1,2,3]};
+        var user = {id: "ASD123", roles: [{role:"readWriteData", game:"testGame", group:"2"},{role:"writeData", game:"testGame", group:"3"}]};
         var token = jwt.sign({user: user}, process.env["JWT_SECRET"]);
 
         var server = new MockServer();
         initJwtAuth(server);
         assert(typeof server.exposedAnonymously["authorize"] === 'function');
 
-        server.authorize({accessToken: token, selectedGroups: [2,3]}, function(err, result){
+        server.authorize({accessToken: token, selectedGroups: ["2","3"]}, function(err, result){
             assert(result);
             assert(server.connections[0]);
             assert(server.connections[0].authorized);

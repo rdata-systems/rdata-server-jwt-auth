@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const merge = require('merge');
+const User = require('./services/user');
 
 const requireProcessEnv = function requireProcessEnv(name){
     if (!process.env[name])
@@ -31,11 +32,13 @@ var JwtAuthController = function JwtAuthController(server){
         jwt.verify(accessToken, self.jwtSecret, function(err, decodedToken){
             if(err) return callback(err);
 
+            var user = new User(decodedToken.user);
+
             if(selectedGroups && Array.isArray(selectedGroups) && selectedGroups.length > 0){ // If groups selected
                 // Check if user can actually select these groups
                 selectedGroups.forEach(function(groupId){
-                    if(!decodedToken.user.groups.includes(groupId))
-                        return callback(new Error('group was not found in the accessToken.user.groups')); // Return an error
+                    if(!user.can("writeData", self.server.options.game, groupId))
+                        return callback(new Error('user has no access to log data to this group')); // Return an error
                 });
             }
 
@@ -56,5 +59,6 @@ var JwtAuthController = function JwtAuthController(server){
 };
 
 module.exports.init = function InitJwtAuth(server){
-    server.addController(JwtAuthController, 'jwtAuth');
+    var controller = new JwtAuthController(server);
+    server.addController(controller, 'jwtAuth');
 };
