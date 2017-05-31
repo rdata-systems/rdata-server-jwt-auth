@@ -8,60 +8,60 @@ const requireProcessEnv = function requireProcessEnv(name){
     return process.env[name];
 };
 
-var JwtAuthController = function JwtAuthController(server){
-    if (this instanceof JwtAuthController === false) {
-        return new JwtAuthController(server);
-    }
-    var self = this;
-    self.server = server;
+module.exports.init = function InitJwtAuth(server){
 
-    self.jwtSecret = requireProcessEnv('JWT_SECRET');
+    var controller = function JwtAuthController(){
+        if (this instanceof JwtAuthController === false) {
+            return new JwtAuthController(server);
+        }
+        var self = this;
+        self.server = server;
 
-    self.init = function(callback){
-        callback();
-        return self;
-    };
+        self.jwtSecret = requireProcessEnv('JWT_SECRET');
 
-    self.authorizeJwt = function(connection, params, callback){
-        var accessToken = params.accessToken;
-        var selectedGroups = params.selectedGroups || null;
+        self.init = function(callback){
+            callback();
+            return self;
+        };
 
-        if(!accessToken)
-            return callback(new Error('Access token is invalid'));
+        self.authorizeJwt = function(connection, params, callback){
+            var accessToken = params.accessToken;
+            var selectedGroups = params.selectedGroups || null;
 
-        jwt.verify(accessToken, self.jwtSecret, function(err, decodedToken){
-            if(err) return callback(err);
+            if(!accessToken)
+                return callback(new Error('Access token is invalid'));
 
-            var user = new User(decodedToken.user);
+            jwt.verify(accessToken, self.jwtSecret, function(err, decodedToken){
+                if(err) return callback(err);
 
-            if(selectedGroups && Array.isArray(selectedGroups) && selectedGroups.length > 0){ // If groups selected
-                // Check if user can actually select these groups
-                for(var i in selectedGroups){
-                    if(selectedGroups.hasOwnProperty(i)) {
-                        var groupId = selectedGroups[i];
-                        if (!user.can("writeData", self.server.options.game, groupId))
-                            return callback(new Error('user has no access to log data to this group')); // Return an error
+                var user = new User(decodedToken.user);
+
+                if(selectedGroups && Array.isArray(selectedGroups) && selectedGroups.length > 0){ // If groups selected
+                    // Check if user can actually select these groups
+                    for(var i in selectedGroups){
+                        if(selectedGroups.hasOwnProperty(i)) {
+                            var groupId = selectedGroups[i];
+                            if (!user.can("writeData", self.server.options.game, groupId))
+                                return callback(new Error('user has no access to log data to this group')); // Return an error
+                        }
                     }
                 }
-            }
 
-            var userPayload = merge(true, decodedToken.user, {
-                selectedGroups: selectedGroups
-            });
+                var userPayload = merge(true, decodedToken.user, {
+                    selectedGroups: selectedGroups
+                });
 
-            connection.authorize(decodedToken.user.id, params.gameVersion, userPayload, function (err) {
-                if(err) return callback(err);
-                callback(null, true);
+                connection.authorize(decodedToken.user.id, params.gameVersion, userPayload, function (err) {
+                    if(err) return callback(err);
+                    callback(null, true);
+                });
             });
-        });
+        };
+
+        self.exposedAnonymously = {
+            'authorize': self.authorizeJwt
+        };
     };
 
-    self.exposedAnonymously = {
-        'authorize': self.authorizeJwt
-    };
-};
-
-module.exports.init = function InitJwtAuth(server){
-    var controller = new JwtAuthController(server);
     server.addController(controller, 'jwtAuth');
 };

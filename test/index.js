@@ -24,7 +24,8 @@ var MockServer = function MockServer(){
         }
     };
 
-    self.addController = function(controller, controllerName){
+    self.addController = function(Controller, controllerName){
+        var controller = new Controller();
         self.controllers[controllerName] = controller;
         self.exposed = merge(self.exposed, controller.exposed);
         self.exposedAnonymously = merge(self.exposedAnonymously, controller.exposedAnonymously);
