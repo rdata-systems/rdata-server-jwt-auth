@@ -88,14 +88,14 @@ describe('JwtAuth', function() {
     });
 
     it('authorizes using valid json web token and provides incorrect selectedGroups', function (done) {
-        var user = {id: "ASD123", groups: [1,2,3]};
+        var user = {id: "ASD123", groups: ["1","2","3"]};
         var token = jwt.sign({user: user}, process.env["JWT_SECRET"]);
 
         var server = new MockServer();
         initJwtAuth(server);
         assert(typeof server.exposedAnonymously["authorize"] === 'function');
 
-        server.authorize({accessToken: token, selectedGroups: [2,5]}, function(err, result){
+        server.authorize({accessToken: token, selectedGroups: ["2","5"]}, function(err, result){
             assert(!result);
             done();
         });

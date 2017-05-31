@@ -36,10 +36,13 @@ var JwtAuthController = function JwtAuthController(server){
 
             if(selectedGroups && Array.isArray(selectedGroups) && selectedGroups.length > 0){ // If groups selected
                 // Check if user can actually select these groups
-                selectedGroups.forEach(function(groupId){
-                    if(!user.can("writeData", self.server.options.game, groupId))
-                        return callback(new Error('user has no access to log data to this group')); // Return an error
-                });
+                for(var i in selectedGroups){
+                    if(selectedGroups.hasOwnProperty(i)) {
+                        var groupId = selectedGroups[i];
+                        if (!user.can("writeData", self.server.options.game, groupId))
+                            return callback(new Error('user has no access to log data to this group')); // Return an error
+                    }
+                }
             }
 
             var userPayload = merge(true, decodedToken.user, {
